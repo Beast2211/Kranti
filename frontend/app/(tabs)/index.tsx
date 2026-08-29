@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useAuth } from "@/src/context/AuthContext";
 import { useFetch } from "@/src/hooks/useFetch";
+import { fileUrl } from "@/src/api/upload";
 import { Card, ProgressBar, EmptyState } from "@/src/components/ui";
 import { colors, fonts, fontSize, radius, spacing, shadow, HERO_BG } from "@/src/theme";
 import { formatINR, formatCompact, formatDate, timeAgo } from "@/src/utils/format";
@@ -46,7 +47,7 @@ const ACTION_ICONS: Record<string, any> = {
 };
 
 export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, token } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, loading, error, reload } = useFetch<Dash>("/dashboard");
@@ -186,12 +187,16 @@ export default function Dashboard() {
           ) : (
             d!.upcoming_events.map((ev) => (
               <Card key={ev.id} style={styles.eventCard}>
-                <View style={styles.dateBadge}>
-                  <Text style={styles.dateDay}>{new Date(ev.event_date).getDate() || "—"}</Text>
-                  <Text style={styles.dateMon}>
-                    {new Date(ev.event_date).toLocaleDateString("en-IN", { month: "short" })}
-                  </Text>
-                </View>
+                {fileUrl(ev.image_url, token) ? (
+                  <Image source={{ uri: fileUrl(ev.image_url, token)! }} style={styles.eventThumb} contentFit="cover" transition={200} />
+                ) : (
+                  <View style={styles.dateBadge}>
+                    <Text style={styles.dateDay}>{new Date(ev.event_date).getDate() || "—"}</Text>
+                    <Text style={styles.dateMon}>
+                      {new Date(ev.event_date).toLocaleDateString("en-IN", { month: "short" })}
+                    </Text>
+                  </View>
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.eventName} numberOfLines={1}>{ev.event_name}</Text>
                   <Text style={styles.eventMeta} numberOfLines={1}>
@@ -291,6 +296,7 @@ const styles = StyleSheet.create({
   approvalText: { flex: 1, fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurfaceTertiary },
   eventCard: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   dateBadge: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center" },
+  eventThumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary },
   dateDay: { fontFamily: fonts.displayBold, fontSize: fontSize.xl, color: colors.brand },
   dateMon: { fontFamily: fonts.semibold, fontSize: 11, color: colors.onSurfaceTertiary, textTransform: "uppercase" },
   eventName: { fontFamily: fonts.bold, fontSize: fontSize.base, color: colors.onSurface },

@@ -8,12 +8,15 @@ import { AppHeader } from "@/src/components/AppHeader";
 import { Badge, Button, Card, ProgressBar, EmptyState } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { api } from "@/src/api/client";
+import { shareReceipt } from "@/src/utils/receipt";
+import { useToast } from "@/src/components/Toast";
 import { colors, fonts, fontSize, radius, spacing, shadow } from "@/src/theme";
 import { formatINR, formatDate } from "@/src/utils/format";
 
 export default function MemberDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isAdmin } = useAuth();
+  const { show } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [member, setMember] = useState<any>(null);
@@ -35,6 +38,22 @@ export default function MemberDetail() {
   useFocusEffect(useCallback(() => { setLoading(true); load(); }, [load]));
 
   const pct = member?.target_amount > 0 ? (member.collected / member.target_amount) * 100 : 0;
+
+  const onShareReceipt = async (p: any) => {
+    try {
+      await shareReceipt({
+        id: p.id,
+        member_name: member.full_name,
+        amount: p.amount,
+        payment_mode: p.payment_mode,
+        payment_date: p.payment_date,
+        transaction_number: p.transaction_number,
+        remarks: p.remarks,
+      });
+    } catch {
+      show("Could not generate receipt", "error");
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surfaceSecondary }}>
@@ -92,6 +111,9 @@ export default function MemberDetail() {
                     <Text style={styles.payDate}>{formatDate(p.payment_date)}{p.transaction_number ? ` · ${p.transaction_number}` : ""}</Text>
                   </View>
                   <Text style={styles.payAmount}>+{formatINR(p.amount)}</Text>
+                  <Pressable onPress={() => onShareReceipt(p)} hitSlop={8} style={styles.receiptBtn} testID={`receipt-${p.id}`}>
+                    <Ionicons name="share-outline" size={18} color={colors.brand} />
+                  </Pressable>
                 </View>
               ))}
             </Card>
@@ -128,5 +150,6 @@ const styles = StyleSheet.create({
   payMode: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurface },
   payDate: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.muted, marginTop: 1 },
   payAmount: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: colors.success },
+  receiptBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center", marginLeft: spacing.sm },
   emptyText: { fontFamily: fonts.regular, fontSize: fontSize.base, color: colors.muted },
 });

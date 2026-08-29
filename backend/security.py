@@ -91,3 +91,17 @@ def require_roles(*allowed):
         return user
 
     return dependency
+
+
+def decode_token(token: str) -> dict | None:
+    """Decode a raw JWT string; return payload or None (used for file query-token auth)."""
+    try:
+        return jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=["HS256"],
+            issuer=JWT_ISSUER,
+            audience=JWT_AUDIENCE,
+        )
+    except Exception:
+        return None

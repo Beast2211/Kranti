@@ -15,6 +15,7 @@ export interface User {
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   loading: boolean;
   login: (identifier: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
@@ -27,21 +28,24 @@ const AuthContext = createContext<AuthState>({} as AuthState);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const bootstrap = useCallback(async () => {
-    const token = await getToken();
-    if (!token) {
+    const t = await getToken();
+    if (!t) {
       setUser(null);
       setLoading(false);
       return;
     }
+    setTokenState(t);
     try {
       const me = await api.get("/auth/me");
       setUser(me);
     } catch {
       await clearToken();
       setUser(null);
+      setTokenState(null);
     } finally {
       setLoading(false);
     }
@@ -54,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (identifier: string, password: string) => {
     const res = await api.post("/auth/login", { identifier, password });
     await setToken(res.access_token);
+    setTokenState(res.access_token);
     setUser(res.user);
     return res.user as User;
   }, []);
@@ -64,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     await clearToken();
     setUser(null);
+    setTokenState(null);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -77,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        token,
         loading,
         login,
         logout,

@@ -5,8 +5,10 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
+import requests
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import StreamingResponse, Response
+from fastapi.concurrency import run_in_threadpool
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 import io
@@ -18,7 +20,7 @@ from db import (
 )
 from security import (
     hash_password, verify_password, dummy_verify, issue_access_token,
-    current_user, require_roles, now, token_digest,
+    current_user, require_roles, now, token_digest, decode_token,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +31,59 @@ api = APIRouter(prefix="/api")
 
 ADMIN_ROLES = ("super_admin", "admin")
 ALL_ROLES = ("super_admin", "admin", "member")
+
+# ---------------------------------------------------------------------------
+# Emergent Object Storage (managed)
+# ---------------------------------------------------------------------------
+STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+APP_NAME = "kranti-ganesh-mandal-2026"
+_storage_key: Optional[str] = None
+
+
+def init_storage() -> Optional[str]:
+    global _storage_key
+    if _storage_key:
+        return _storage_key
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
+    resp.raise_for_status()
+    _storage_key = resp.json()["storage_key"]
+    return _storage_key
+
+
+def put_object(path: str, data: bytes, content_type: str) -> dict:
+    global _storage_key
+    key = init_storage()
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type},
+        data=data,
+        timeout=120,
+    )
+    if resp.status_code == 503:
+        _storage_key = None
+        key = init_storage()
+        resp = requests.put(
+            f"{STORAGE_URL}/objects/{path}",
+            headers={"X-Storage-Key": key, "Content-Type": content_type},
+            data=data,
+            timeout=120,
+        )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def get_object(path: str) -> tuple[bytes, str]:
+    global _storage_key
+    key = init_storage()
+    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    if resp.status_code == 503:
+        _storage_key = None
+        key = init_storage()
+        resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 PAYMENT_MODES = {"Cash", "UPI", "Bank Transfer", "Other"}
 EXPENSE_CATEGORIES = {
@@ -1000,6 +1055,47 @@ async def list_audit(user: dict = Depends(require_roles("super_admin"))):
     return await cur.to_list(200)
 
 
+# ---------------------------------------------------------------------------
+# File upload / serve (Emergent Object Storage)
+# ---------------------------------------------------------------------------
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/jpg"}
+MAX_UPLOAD_BYTES = 8 * 1024 * 1024  # 8 MB
+
+
+@api.post("/upload")
+async def upload_file(file: UploadFile = File(...), user: dict = Depends(require_roles(*ADMIN_ROLES))):
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Image too large (max 8 MB).")
+    content_type = file.content_type or "application/octet-stream"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only image files are allowed.")
+    ext = (file.filename or "img.jpg").rsplit(".", 1)[-1].lower()
+    if ext not in ("jpg", "jpeg", "png", "webp", "heic"):
+        ext = "jpg"
+    path = f"{APP_NAME}/uploads/{user['id']}/{uid()}.{ext}"
+    try:
+        await run_in_threadpool(put_object, path, data, content_type)
+    except requests.HTTPError as e:
+        code = e.response.status_code if e.response is not None else 500
+        if code == 402:
+            raise HTTPException(status_code=402, detail="Storage credit limit reached.")
+        raise HTTPException(status_code=502, detail="Upload failed. Please try again.")
+    return {"path": path}
+
+
+@api.get("/files/{path:path}")
+async def serve_file(path: str, token: Optional[str] = Query(None)):
+    # Auth via query token (web <img>) since Authorization headers aren't sendable there.
+    if not token or not decode_token(token):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        content, ctype = await run_in_threadpool(get_object, path)
+    except requests.HTTPError:
+        raise HTTPException(status_code=404, detail="File not found")
+    return Response(content=content, media_type=ctype, headers={"Cache-Control": "public, max-age=86400"})
+
+
 @api.get("/")
 async def root():
     return {"app": "Kranti Ganesh Mandal 2026 Management", "status": "ok"}
@@ -1023,6 +1119,12 @@ async def startup():
     await users.create_index("user_id", sparse=True)
     await members.create_index("id", unique=True)
     await payments.create_index("member_id")
+
+    try:
+        await run_in_threadpool(init_storage)
+        logger.info("Object storage initialized")
+    except Exception as e:
+        logger.warning("Object storage init failed: %s", e)
 
     sa_user_id = os.environ.get("SUPER_ADMIN_USER_ID")
     sa_password = os.environ.get("SUPER_ADMIN_PASSWORD")

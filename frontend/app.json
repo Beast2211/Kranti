@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.mandaladmin.ns8rzr"
+      "bundleIdentifier": "com.emergent.mandaladmin.ns8rzr",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Add event posters and photos"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +21,8 @@
         "backgroundColor": "#EA580C"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.emergent.mandaladmin.ns8rzr"
+      "package": "com.emergent.mandaladmin.ns8rzr",
+      "permissions": ["READ_MEDIA_IMAGES"]
     },
     "web": {
       "bundler": "metro",

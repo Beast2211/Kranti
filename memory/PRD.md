@@ -41,6 +41,8 @@ strict backend-enforced RBAC, secure JWT auth, INR formatting.
 - [x] Admin Management (super_admin) + Audit Logs — 2026-06
 - [x] Festive UI, INR formatting, empty/loading/error states — 2026-06
 - [x] Verified: 40/40 backend tests + frontend E2E — 2026-06
+- [x] Event photos: admins attach a poster via gallery → Emergent Object Storage; shown as banner in Events list & thumbnail on Dashboard (backend /api/upload + /api/files with token auth) — 2026-06
+- [x] Payment receipts: one-tap shareable ₹ PDF receipt from any payment row (Vargani ledger + member detail) via expo-print/expo-sharing — 2026-06
 
 ## Backlog / Remaining
 - P1: Receipt & event image uploads via cloud object storage (deferred per user).

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +9,7 @@ import { AppHeader } from "@/src/components/AppHeader";
 import { Badge, ChipRow, EmptyState, Skeleton } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { api } from "@/src/api/client";
+import { fileUrl } from "@/src/api/upload";
 import { colors, fonts, fontSize, radius, spacing, shadow } from "@/src/theme";
 import { formatDate } from "@/src/utils/format";
 
@@ -21,7 +23,7 @@ const FILTERS = [
 const STATUS_TONE: Record<string, any> = { Upcoming: "brand", Completed: "success", Cancelled: "error" };
 
 export default function Events() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, token } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [events, setEvents] = useState<any[]>([]);
@@ -43,20 +45,24 @@ export default function Events() {
 
   const renderItem = ({ item }: { item: any }) => {
     const d = new Date(item.event_date);
+    const img = fileUrl(item.image_url, token);
     return (
       <View style={styles.card} testID={`event-card-${item.id}`}>
-        <View style={styles.dateBadge}>
-          <Text style={styles.dateDay}>{isNaN(d.getTime()) ? "—" : d.getDate()}</Text>
-          <Text style={styles.dateMon}>{isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-IN", { month: "short" })}</Text>
+        {img ? <Image source={{ uri: img }} style={styles.banner} contentFit="cover" transition={200} /> : null}
+        <View style={styles.cardRow}>
+          <View style={styles.dateBadge}>
+            <Text style={styles.dateDay}>{isNaN(d.getTime()) ? "—" : d.getDate()}</Text>
+            <Text style={styles.dateMon}>{isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-IN", { month: "short" })}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name} numberOfLines={1}>{item.event_name}</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              <Ionicons name="location-outline" size={12} color={colors.muted} /> {item.location || "Mandal"}
+            </Text>
+            {item.start_time ? <Text style={styles.meta}>{item.start_time}{item.end_time ? ` - ${item.end_time}` : ""}</Text> : null}
+          </View>
+          <Badge label={item.status} tone={STATUS_TONE[item.status]} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name} numberOfLines={1}>{item.event_name}</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            <Ionicons name="location-outline" size={12} color={colors.muted} /> {item.location || "Mandal"}
-          </Text>
-          {item.start_time ? <Text style={styles.meta}>{item.start_time}{item.end_time ? ` - ${item.end_time}` : ""}</Text> : null}
-        </View>
-        <Badge label={item.status} tone={STATUS_TONE[item.status]} />
       </View>
     );
   };
@@ -87,7 +93,9 @@ export default function Events() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: "row", alignItems: "center", gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
+  card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: "hidden", ...shadow.card },
+  banner: { width: "100%", height: 150, backgroundColor: colors.surfaceTertiary },
+  cardRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, padding: spacing.lg },
   dateBadge: { width: 54, height: 54, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center" },
   dateDay: { fontFamily: fonts.displayBold, fontSize: fontSize.xl, color: colors.brand },
   dateMon: { fontFamily: fonts.semibold, fontSize: 11, color: colors.onSurfaceTertiary, textTransform: "uppercase" },

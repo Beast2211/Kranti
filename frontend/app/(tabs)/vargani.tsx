@@ -8,6 +8,8 @@ import { AppHeader } from "@/src/components/AppHeader";
 import { EmptyState, ProgressBar, Skeleton } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { api } from "@/src/api/client";
+import { shareReceipt } from "@/src/utils/receipt";
+import { useToast } from "@/src/components/Toast";
 import { colors, fonts, fontSize, radius, spacing, shadow } from "@/src/theme";
 import { formatINR, formatDate } from "@/src/utils/format";
 
@@ -20,6 +22,7 @@ const MODE_ICON: Record<string, any> = {
 
 export default function Vargani() {
   const { isAdmin } = useAuth();
+  const { show } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [payments, setPayments] = useState<any[]>([]);
@@ -103,6 +106,24 @@ export default function Vargani() {
         <Text style={styles.rowMeta}>{formatDate(item.payment_date)} · {item.payment_mode}</Text>
       </View>
       <Text style={styles.rowAmount}>+{formatINR(item.amount)}</Text>
+      <Pressable
+        onPress={async () => {
+          try {
+            await shareReceipt({
+              id: item.id, member_name: item.member_name, amount: item.amount,
+              payment_mode: item.payment_mode, payment_date: item.payment_date,
+              transaction_number: item.transaction_number, remarks: item.remarks,
+            });
+          } catch {
+            show("Could not generate receipt", "error");
+          }
+        }}
+        hitSlop={8}
+        style={styles.receiptBtn}
+        testID={`receipt-${item.id}`}
+      >
+        <Ionicons name="share-outline" size={18} color={colors.brand} />
+      </Pressable>
     </View>
   );
 
@@ -159,5 +180,6 @@ const styles = StyleSheet.create({
   rowName: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurface },
   rowMeta: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.muted, marginTop: 1 },
   rowAmount: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: colors.success },
+  receiptBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center", marginLeft: spacing.sm },
   fab: { position: "absolute", right: spacing.lg, width: 58, height: 58, borderRadius: 29, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", ...shadow.raised },
 });
