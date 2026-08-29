@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Button, Field } from "@/src/components/ui";
@@ -23,6 +23,8 @@ export default function AddEvent() {
   const { token } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { eventId } = useLocalSearchParams<{ eventId?: string }>();
+  const isEdit = !!eventId;
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -35,6 +37,24 @@ export default function AddEvent() {
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!eventId) return;
+    api.get(`/events/${eventId}`).then((e) => {
+      setName(e.event_name || "");
+      setDate((e.event_date || "").slice(0, 10));
+      setStartTime(e.start_time || "");
+      setEndTime(e.end_time || "");
+      setLocation(e.location || "");
+      setOrganizer(e.organizer || "");
+      setDescription(e.description || "");
+      setStatus(e.status || "Upcoming");
+      if (e.image_url) {
+        setImagePath(e.image_url);
+        setLocalPreview(fileUrl(e.image_url, token));
+      }
+    }).catch(() => show("Could not load event", "error"));
+  }, [eventId, token, show]);
 
   const pickImage = async () => {
     const perm = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -78,17 +98,23 @@ export default function AddEvent() {
     if (!name.trim()) return show("Enter event name", "error");
     if (!DATE_RE.test(date)) return show("Enter date as YYYY-MM-DD", "error");
     setLoading(true);
+    const body = {
+      event_name: name, event_date: date, start_time: startTime || null,
+      end_time: endTime || null, location: location || null,
+      organizer: organizer || null, description: description || null,
+      image_url: imagePath, status,
+    };
     try {
-      await api.post("/events", {
-        event_name: name, event_date: date, start_time: startTime || null,
-        end_time: endTime || null, location: location || null,
-        organizer: organizer || null, description: description || null,
-        image_url: imagePath, status,
-      });
-      show("Event created successfully", "success");
+      if (isEdit) {
+        await api.put(`/events/${eventId}`, body);
+        show("Event updated successfully", "success");
+      } else {
+        await api.post("/events", body);
+        show("Event created successfully", "success");
+      }
       router.back();
     } catch (e) {
-      show(e instanceof ApiError ? e.message : "Failed to create event", "error");
+      show(e instanceof ApiError ? e.message : "Failed to save event", "error");
     } finally {
       setLoading(false);
     }
@@ -97,7 +123,7 @@ export default function AddEvent() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.modalHeader, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.title}>Add Event</Text>
+        <Text style={styles.title}>{isEdit ? "Edit Event" : "Add Event"}</Text>
         <Pressable onPress={() => router.back()} hitSlop={12} testID="close-modal">
           <Ionicons name="close" size={26} color={colors.onSurface} />
         </Pressable>
@@ -141,7 +167,7 @@ export default function AddEvent() {
         <Picker label="Status" value={status} options={STATUSES} onChange={setStatus} icon="flag-outline" testID="event-status-picker" />
         <Field label="Description (optional)" placeholder="Details" value={description} onChangeText={setDescription} multiline testID="event-description-input" />
 
-        <Button title="Create Event" onPress={submit} loading={loading} icon="checkmark" testID="event-submit-button" />
+        <Button title={isEdit ? "Save Changes" : "Create Event"} onPress={submit} loading={loading} icon="checkmark" testID="event-submit-button" />
       </KeyboardAwareScrollView>
     </View>
   );

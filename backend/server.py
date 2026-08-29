@@ -829,6 +829,14 @@ async def list_events(status: Optional[str] = None, user: dict = Depends(current
     return await cur.to_list(1000)
 
 
+@api.get("/events/{event_id}")
+async def get_event(event_id: str, user: dict = Depends(current_user)):
+    e = await events.find_one({"id": event_id, "deleted_at": None}, {"_id": 0})
+    if not e:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return e
+
+
 @api.post("/events")
 async def create_event(body: EventCreate, user: dict = Depends(require_roles(*ADMIN_ROLES))):
     t = iso(now())
