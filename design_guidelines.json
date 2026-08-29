@@ -1,0 +1,157 @@
+{
+  "app_name": "Kranti Ganesh Mandal 2026 Management",
+  "personality": "1 iOS-Native Clean (fused with festive colors)",
+  "personality_one_liner": "A clean, highly legible financial command center wrapped in the warmth of traditional saffron and gold festive tones.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#1C1917",
+    "surfaceSecondary": "#FFF8F3",
+    "onSurfaceSecondary": "#292524",
+    "surfaceTertiary": "#FFEFE5",
+    "onSurfaceTertiary": "#44403C",
+    "surfaceInverse": "#292524",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#EA580C",
+    "brandPrimary": "#F97316",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#EAB308",
+    "onBrandSecondary": "#422006",
+    "brandTertiary": "#FEF08A",
+    "onBrandTertiary": "#713F12",
+    "success": "#16A34A",
+    "onSuccess": "#FFFFFF",
+    "warning": "#EAB308",
+    "onWarning": "#422006",
+    "error": "#DC2626",
+    "onError": "#FFFFFF",
+    "info": "#57534E",
+    "onInfo": "#FFFFFF",
+    "border": "#E7E5E4",
+    "borderStrong": "#D6D3D1",
+    "divider": "#F5F5F4"
+  },
+  "typography": {
+    "displayFontFamily": "Space Grotesk",
+    "textFontFamily": "Plus Jakarta Sans",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Use generous vertical breathing room. Pad cards aggressively (lg to xl) and avoid tight data density unless in a dedicated transaction list.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Ionicons",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use glass on bottom tab bar.",
+      "Use glass on sticky headers over scrollable feeds (like Vargani and Expenses lists).",
+      "Use frosted glass overlay on the Hero KPI card sitting on the festive background."
+    ],
+    "dont's": [
+      "Do not use glass on regular list rows or input fields.",
+      "Do not use glass if the background has no texture or image."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Dashboard",
+      "purpose": "A commanding financial overview showing targets, collections, and quick actions.",
+      "states": {
+        "loading": "Centered brand-colored spinner",
+        "empty": "Not applicable for dashboard; default to 0 metrics",
+        "error": "Error fetching dashboard data + Retry button"
+      },
+      "layout": "Hero balance card at the top utilizing a festive backdrop with glassmorphism overlay containing 'Total Target', 'Collected', and 'Pending' figures in monospaced font. Followed by a 2x2 grid of quick actions (Add Vargani, Add Expense). Scrollable recent activity feed threaded below."
+    },
+    {
+      "name": "Members",
+      "purpose": "Directory of all Mandal members and approval workflow for Admins.",
+      "states": {
+        "loading": "Skeleton list view",
+        "empty": "Illustration of Lord Ganesha + 'No members found'",
+        "error": "Failed to load members + Retry button"
+      },
+      "layout": "Top tabbed navigation (Pending, Approved). List view with padded cards showing member avatar, name, and role/status badge. Pending tab includes prominent Approve (Success color) and Reject (Error color) actions."
+    },
+    {
+      "name": "Vargani",
+      "purpose": "Detailed ledger of community donations with search and filtering.",
+      "states": {
+        "loading": "Skeleton rows",
+        "empty": "Empty state illustration + 'No contributions recorded yet'",
+        "error": "Failed to load Vargani + Retry button"
+      },
+      "layout": "Search bar and sticky filter chips (All, Advance, Pending) below header. Chronological feed of transactions with color-coded amounts (Green for collected, Yellow for pending). Tapping a row opens a bottom sheet with details."
+    },
+    {
+      "name": "Expenses",
+      "purpose": "Track outbound funds categorized by festival needs.",
+      "states": {
+        "loading": "Skeleton rows",
+        "empty": "Empty state illustration + 'No expenses logged'",
+        "error": "Failed to load expenses + Retry button"
+      },
+      "layout": "Top summary card of 'Total Spent'. Categorized list below. Sticky primary CTA 'Add Expense' at the bottom right (FAB) or bottom centered."
+    },
+    {
+      "name": "Events",
+      "purpose": "Schedule of festival events and completion statuses.",
+      "states": {
+        "loading": "Skeleton cards",
+        "empty": "Empty state illustration + 'No upcoming events'",
+        "error": "Failed to load events + Retry button"
+      },
+      "layout": "Vertical list of event cards. Each card has a date badge on the left, event title, location, and status (Upcoming/Completed) on the right."
+    }
+  ],
+  "images": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1669124367346-c6ccc46bc805?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG9yYW5nZSUyMGdvbGQlMjBmZXN0aXZlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3ODc5ODM1NzR8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Abstract orange gold festive background"
+    },
+    "empty_state_ganesha": {
+      "url": "https://images.unsplash.com/photo-1607604760190-ec9ccc12156e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwxfHxMb3JkJTIwR2FuZXNoYSUyMHN0YXR1ZSUyMHRyYWRpdGlvbmFsfGVufDB8fHx8MTc4Nzk4MzU3NHww&ixlib=rb-4.1.0&q=85",
+      "alt": "Lord Ganesha statue traditional"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the Saffron/Gold palette defined in the guidelines, avoiding generic blue/purple finance patterns.",
+    "Implement the Dashboard Hero card using the provided 'hero_background' image covered by an expo-linear-gradient scrim and expo-glass-effect (or expo-blur) so text remains readable.",
+    "Use 'Space Grotesk' for all financial figures and metrics to ensure alignment and scannability, utilizing 'Plus Jakarta Sans' for standard body text.",
+    "The Members screen must implement a tabbed interface (Pending vs Approved) for Admin roles. Pending cards should highlight quick Approve/Reject actions.",
+    "Ensure 'Add Vargani' and 'Add Expense' are highly accessible, either through the Dashboard quick action 2x2 grid or sticky CTAs at the bottom of their respective screens.",
+    "Lists (Vargani, Expenses) should use clear color coding: Success Green for collected/positive, Warning Yellow for pending, and Error Red for outgoing/cancelled."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "summary": "Full backend + frontend testing for Kranti Ganesh Mandal 2026. Backend: 40/40 pytest cases pass (auth, register+pending block, RBAC on members/payments/expenses/events, admin management, member approval flow, Vargani financial math with overpay validation, expenses, events, dashboard aggregates, vargani/expenses/events reports, CSV export, notifications). Frontend: Super admin login succeeds, dashboard renders correct KPIs (₹25,000 target · ₹19,000 collected · ₹6,000 pending · ₹14,000 net balance · ₹5,000 expenses), Quick Actions visible for admin, Members tab shows Approve/Reject controls for pending members, More tab exposes Admin Management/Audit Logs. Minor web-only console warnings observed (font TTFs failing to decode via Expo asset resolver, deprecated shadow*/pointerEvents style props, useNativeDriver fallback) — do not block functionality but degrade typography on web preview.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "web preview (all)", "issues": ["Custom fonts (PlusJakartaSans, SpaceGrotesk) fail to decode via /assets?unstable_path... URL → 'OTS parsing error: invalid sfntVersion'. Falls back to system font on web; native builds unaffected."]}
+    ],
+    "react_native_issues": [
+      {"component": "StyleSheet shadow*", "issue": "'shadow*' style props are deprecated on RN Web — use boxShadow. Reference: /app/frontend/src/theme.ts (shadow.card definition)"},
+      {"component": "props.pointerEvents", "issue": "props.pointerEvents is deprecated; move to style.pointerEvents. Likely from BlurView/LinearGradient wrappers in /app/frontend/app/(tabs)/index.tsx"},
+      {"component": "Animated useNativeDriver", "issue": "useNativeDriver fallback warning on web (harmless on web preview but noisy). Consider Platform.OS==='web' ? false : true where Animated is used."}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_kranti_mandal.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "(Optional/UX) Investigate custom font 404/decode failures on web preview — Metro asset resolver returns HTML for .ttf URLs. App is fully usable with fallback system fonts.",
+    "(Optional) Migrate StyleSheet shadow* props to boxShadow and Animated pointerEvents to style.pointerEvents to silence RN Web deprecation warnings."
+  ],
+  "critical_code_review_comments": [
+    "server.py is ~1050 lines — consider splitting into routers per module (auth/members/vargani/expenses/events/reports) for maintainability, but not blocking.",
+    "Overpay validation correctly enforced (400 when amount > pending and allow_overpay false).",
+    "MongoDB _id is properly excluded via projection everywhere; uuid `id` field used consistently.",
+    "JWT with token_version rotation on logout/password-change/deactivation implemented correctly.",
+    "RBAC via require_roles dependency is applied consistently on all write and privileged read endpoints."
+  ],
+  "updated_files": ["/app/backend/tests/test_kranti_mandal.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "During pytest run: 2 TEST members (A: target 10000, B: target 15000), 1 self-registered TEST Member One (pending→approved), 1 admin (TEST_admin_*), 1 payment 4000 for A, 1 payment 15000 for B, 1 expense (TEST Decor ₹5000, Decoration), 1 upcoming event (TEST Ganesh Sthapana 2099-09-01). All prefixed TEST_/TEST for easy cleanup.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run backend suite with `pytest tests/test_kranti_mandal.py -n 0` (serial) from /app/backend — the shared `state` dict requires sequential execution; the repo pytest.ini defaults to `-n 2 --dist loadscope` which breaks cross-class state sharing. TEST_ prefixed data accumulates across runs; safe to leave or drop the test DB. Super admin creds: superadmin / Kranti@2026.",
+  "rca_of_issue": "No blocking bugs. Font decode warnings originate from Expo web asset resolver returning non-binary payload for `/assets?unstable_path=./assets/fonts/*.ttf` — cosmetic only."
+}
