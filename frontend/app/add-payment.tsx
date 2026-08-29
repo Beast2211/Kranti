@@ -13,6 +13,8 @@ import { colors, fonts, fontSize, spacing, radius } from "@/src/theme";
 import { formatINR } from "@/src/utils/format";
 
 const MODES = ["Cash", "UPI", "Bank Transfer", "Other"].map((m) => ({ label: m, value: m }));
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const today = () => new Date().toISOString().slice(0, 10);
 
 export default function AddPayment() {
   const { show } = useToast();
@@ -26,6 +28,7 @@ export default function AddPayment() {
   const [memberName, setMemberName] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [mode, setMode] = useState<string | null>("Cash");
+  const [date, setDate] = useState(today());
   const [txn, setTxn] = useState("");
   const [remarks, setRemarks] = useState("");
   const [overpay, setOverpay] = useState(false);
@@ -42,6 +45,7 @@ export default function AddPayment() {
       setMemberName(p.member_name || "");
       setAmount(p.amount ? String(p.amount) : "");
       setMode(p.payment_mode || "Cash");
+      setDate((p.payment_date || "").slice(0, 10) || today());
       setTxn(p.transaction_number || "");
       setRemarks(p.remarks || "");
     }).catch(() => show("Could not load payment", "error"));
@@ -54,6 +58,7 @@ export default function AddPayment() {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) return show("Enter a valid amount", "error");
     if (!mode) return show("Select payment mode", "error");
+    if (!DATE_RE.test(date)) return show("Enter date as YYYY-MM-DD", "error");
     setLoading(true);
     try {
       if (isEdit) {
@@ -61,6 +66,7 @@ export default function AddPayment() {
           member_id: memberId,
           amount: amt,
           payment_mode: mode,
+          payment_date: date,
           transaction_number: txn || null,
           remarks: remarks || null,
         });
@@ -70,6 +76,7 @@ export default function AddPayment() {
           member_id: memberId,
           amount: amt,
           payment_mode: mode,
+          payment_date: date,
           transaction_number: txn || null,
           remarks: remarks || null,
           allow_overpay: overpay,
@@ -123,6 +130,7 @@ export default function AddPayment() {
 
         <Field label="Amount (₹)" placeholder="0" icon="cash-outline" keyboardType="numeric" value={amount} onChangeText={setAmount} testID="payment-amount-input" />
         <Picker label="Payment Mode" value={mode} options={MODES} onChange={setMode} icon="wallet-outline" testID="payment-mode-picker" />
+        <Field label="Payment Date" placeholder="YYYY-MM-DD" icon="calendar-outline" value={date} onChangeText={setDate} testID="payment-date-input" />
         <Field label="Transaction Number (optional)" placeholder="UPI/Bank ref" value={txn} onChangeText={setTxn} testID="payment-txn-input" />
         <Field label="Remarks (optional)" placeholder="Any notes" value={remarks} onChangeText={setRemarks} testID="payment-remarks-input" />
 
