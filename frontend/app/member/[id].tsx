@@ -24,6 +24,8 @@ export default function MemberDetail() {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmPayment, setConfirmPayment] = useState<any>(null);
+  const [deletingPayment, setDeletingPayment] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -54,6 +56,21 @@ export default function MemberDetail() {
   };
 
   const pct = member?.target_amount > 0 ? (member.collected / member.target_amount) * 100 : 0;
+
+  const doDeletePayment = async () => {
+    if (!confirmPayment) return;
+    setDeletingPayment(true);
+    try {
+      await api.del(`/payments/${confirmPayment.id}`);
+      show("Payment deleted", "success");
+      setConfirmPayment(null);
+      load();
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : "Delete failed", "error");
+    } finally {
+      setDeletingPayment(false);
+    }
+  };
 
   const onShareReceipt = async (p: any) => {
     try {
@@ -127,16 +144,30 @@ export default function MemberDetail() {
           ) : (
             <Card style={{ paddingVertical: spacing.xs }}>
               {payments.map((p, i) => (
-                <View key={p.id} style={[styles.payRow, i === payments.length - 1 && { borderBottomWidth: 0 }]}>
-                  <View style={styles.payIcon}><Ionicons name="cash" size={16} color={colors.success} /></View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.payMode}>{p.payment_mode}</Text>
-                    <Text style={styles.payDate}>{formatDate(p.payment_date)}{p.transaction_number ? ` · ${p.transaction_number}` : ""}</Text>
+                <View key={p.id} style={[styles.payItem, i === payments.length - 1 && { borderBottomWidth: 0 }]}>
+                  <View style={styles.payRow}>
+                    <View style={styles.payIcon}><Ionicons name="cash" size={16} color={colors.success} /></View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.payMode}>{p.payment_mode}</Text>
+                      <Text style={styles.payDate}>{formatDate(p.payment_date)}{p.transaction_number ? ` · ${p.transaction_number}` : ""}</Text>
+                    </View>
+                    <Text style={styles.payAmount}>+{formatINR(p.amount)}</Text>
+                    <Pressable onPress={() => onShareReceipt(p)} hitSlop={8} style={styles.receiptBtn} testID={`receipt-${p.id}`}>
+                      <Ionicons name="share-outline" size={18} color={colors.brand} />
+                    </Pressable>
                   </View>
-                  <Text style={styles.payAmount}>+{formatINR(p.amount)}</Text>
-                  <Pressable onPress={() => onShareReceipt(p)} hitSlop={8} style={styles.receiptBtn} testID={`receipt-${p.id}`}>
-                    <Ionicons name="share-outline" size={18} color={colors.brand} />
-                  </Pressable>
+                  {isAdmin && (
+                    <View style={styles.payActions}>
+                      <Pressable style={styles.payActionBtn} onPress={() => router.push(`/add-payment?paymentId=${p.id}`)} testID={`edit-payment-${p.id}`}>
+                        <Ionicons name="create-outline" size={15} color={colors.brand} />
+                        <Text style={styles.payActionText}>Edit</Text>
+                      </Pressable>
+                      <Pressable style={[styles.payActionBtn, { borderColor: colors.error }]} onPress={() => setConfirmPayment(p)} testID={`delete-payment-${p.id}`}>
+                        <Ionicons name="trash-outline" size={15} color={colors.error} />
+                        <Text style={[styles.payActionText, { color: colors.error }]}>Delete</Text>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               ))}
             </Card>
@@ -153,6 +184,20 @@ export default function MemberDetail() {
             <View style={styles.confirmActions}>
               <Button title="Cancel" variant="secondary" onPress={() => setConfirmDelete(false)} style={{ flex: 1 }} testID="cancel-delete-member" />
               <Button title="Delete" variant="danger" onPress={doDelete} loading={deleting} style={{ flex: 1 }} testID="confirm-delete-member" />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={!!confirmPayment} transparent animationType="fade" onRequestClose={() => setConfirmPayment(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setConfirmPayment(null)}>
+          <Pressable style={styles.confirmCard} onPress={() => {}}>
+            <View style={styles.confirmIcon}><Ionicons name="trash" size={26} color={colors.error} /></View>
+            <Text style={styles.confirmTitle}>Delete payment?</Text>
+            <Text style={styles.confirmSub} numberOfLines={2}>This {confirmPayment ? formatINR(confirmPayment.amount) : ""} entry will be removed from the ledger.</Text>
+            <View style={styles.confirmActions}>
+              <Button title="Cancel" variant="secondary" onPress={() => setConfirmPayment(null)} style={{ flex: 1 }} testID="cancel-delete-payment" />
+              <Button title="Delete" variant="danger" onPress={doDeletePayment} loading={deletingPayment} style={{ flex: 1 }} testID="confirm-delete-payment" />
             </View>
           </Pressable>
         </Pressable>
@@ -182,7 +227,11 @@ const styles = StyleSheet.create({
   finLabel: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.muted },
   finValue: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, marginTop: 2 },
   pctText: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
-  payRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.divider },
+  payRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  payItem: { paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.divider },
+  payActions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, marginLeft: 44 },
+  payActionBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.brand },
+  payActionText: { fontFamily: fonts.semibold, fontSize: fontSize.sm, color: colors.brand },
   payIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#DCFCE7", alignItems: "center", justifyContent: "center" },
   payMode: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurface },
   payDate: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.muted, marginTop: 1 },

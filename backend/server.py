@@ -640,6 +640,16 @@ async def list_payments(
     return docs
 
 
+@api.get("/payments/{payment_id}")
+async def get_payment(payment_id: str, user: dict = Depends(current_user)):
+    p = await payments.find_one({"id": payment_id, "deleted_at": None}, {"_id": 0})
+    if not p:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    m = await members.find_one({"id": p["member_id"]}, {"_id": 0, "full_name": 1})
+    p["member_name"] = m.get("full_name") if m else "Unknown"
+    return p
+
+
 @api.post("/payments")
 async def create_payment(body: PaymentCreate, user: dict = Depends(require_roles(*ADMIN_ROLES))):
     m = await members.find_one({"id": body.member_id, "deleted_at": None})
