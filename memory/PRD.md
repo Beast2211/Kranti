@@ -48,6 +48,7 @@ strict backend-enforced RBAC, secure JWT auth, INR formatting.
 - [x] Advance now counts as collected (reduces pending); dashboard total_collected includes advances — 2026-06
 - [x] Dashboard: added "Kranti Ganesh Mandal 2026" heading; removed Advance KPI (replaced with Collection %) — 2026-06
 - [x] Vargani payment edit & delete (Vargani ledger + member payment history) for admins, with confirm dialogs; new GET /api/payments/{id}; edit/delete recalculate collected & pending automatically — 2026-06
+- [x] Login screen: Ganesha hero image added above "Kranti Ganesh Mandal" title (assets/images/ganesha-hero.jpg) — verified rendering — 2026-06
 
 ## Backlog / Remaining
 - P1: Receipt & event image uploads via cloud object storage (deferred per user).

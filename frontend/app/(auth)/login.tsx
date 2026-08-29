@@ -10,7 +10,7 @@ import { Button, Field } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import { ApiError } from "@/src/api/client";
-import { colors, fonts, fontSize, radius, spacing, GANESHA_IMG } from "@/src/theme";
+import { colors, fonts, fontSize, radius, spacing } from "@/src/theme";
 
 export default function Login() {
   const { login } = useAuth();
@@ -52,7 +52,7 @@ export default function Login() {
         end={{ x: 1, y: 1 }}
         style={[styles.hero, { paddingTop: insets.top + spacing.xl }]}
       >
-        <Image source={{ uri: GANESHA_IMG }} style={styles.logo} />
+        <Image source={require("../../assets/images/ganesha-hero.jpg")} style={styles.heroImg} resizeMode="cover" />
         <Text style={styles.brandTitle}>Kranti Ganesh Mandal</Text>
         <Text style={styles.brandYear}>2026 · Management</Text>
       </LinearGradient>
@@ -120,6 +120,15 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "rgba(255,255,255,0.6)",
     marginBottom: spacing.md,
+  },
+  heroImg: {
+    width: 200,
+    height: 190,
+    borderRadius: 24,
+    borderWidth: 4,
+    borderColor: "rgba(255,255,255,0.7)",
+    marginBottom: spacing.lg,
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   brandTitle: { fontFamily: fonts.displayBold, fontSize: fontSize["2xl"], color: "#FFFFFF" },
   brandYear: { fontFamily: fonts.medium, fontSize: fontSize.base, color: "rgba(255,255,255,0.9)", marginTop: 2 },
