@@ -20,7 +20,7 @@ import { useFetch } from "@/src/hooks/useFetch";
 import { fileUrl } from "@/src/api/upload";
 import { Card, ProgressBar, EmptyState } from "@/src/components/ui";
 import { colors, fonts, fontSize, radius, spacing, shadow, HERO_BG } from "@/src/theme";
-import { formatINR, formatDate, timeAgo } from "@/src/utils/format";
+import { formatINR, formatDate, timeAgo, eventDateParts, formatEventDate } from "@/src/utils/format";
 
 interface Dash {
   total_target: number;
@@ -192,16 +192,14 @@ export default function Dashboard() {
                   <Image source={{ uri: fileUrl(ev.image_url, token)! }} style={styles.eventThumb} contentFit="cover" transition={200} />
                 ) : (
                   <View style={styles.dateBadge}>
-                    <Text style={styles.dateDay}>{new Date(ev.event_date).getDate() || "—"}</Text>
-                    <Text style={styles.dateMon}>
-                      {new Date(ev.event_date).toLocaleDateString("en-IN", { month: "short" })}
-                    </Text>
+                    <Text style={styles.dateDay}>{eventDateParts(ev.event_date).day}</Text>
+                    <Text style={styles.dateMon}>{eventDateParts(ev.event_date).month}</Text>
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.eventName} numberOfLines={1}>{ev.event_name}</Text>
                   <Text style={styles.eventMeta} numberOfLines={1}>
-                    {ev.location || "Mandal"} {ev.start_time ? `· ${ev.start_time}` : ""}
+                    {formatEventDate(ev.event_date)} · {ev.location || "Mandal"} {ev.start_time ? `· ${ev.start_time}` : ""}
                   </Text>
                 </View>
               </Card>

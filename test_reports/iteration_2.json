@@ -1,0 +1,29 @@
+{
+  "summary": "Verified the event-date display bug fix on the Kranti Ganesh Mandal 2026 Expo/RN app. Frontend-only testing per request. Logged in as superadmin (superadmin / Kranti@2026) at 390x844 mobile viewport. All 4 requested scenarios PASS: (1) Events screen shows seeded event 'Ganpati Sthapana' with badge '15 JUN' and full date '15 Jun 2026' - no off-by-one. (2) Dashboard 'Upcoming Events' card renders correctly (verified with a future TEST_NewYear event on 2027-01-01 -> badge '1 JAN', meta '1 Jan 2027 · TEST_Venue'). (3) Created a new event dated 2026-12-25 via Add Event FAB -> card shows badge '25 DEC' and full date '25 Dec 2026'. (4) Edit flow: date field prefilled correctly as '2026-12-25' and after saving without changes the displayed date remained '25 Dec 2026'. The parseDateLocal / eventDateParts / formatEventDate helpers in /app/frontend/src/utils/format.ts work as intended and are correctly consumed by /app/frontend/app/events.tsx and /app/frontend/app/(tabs)/index.tsx. Note: the app's effective 'today' is Aug 2026 so the seeded 2026-06-15 event is treated as past by /dashboard filter (expected, not a bug). Deprecated packages/RN issues detected: none related to this fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "global", "issues": ["Non-blocking console warnings: 'shadow*' style props are deprecated (use boxShadow); 'props.pointerEvents is deprecated'; multiple font-decode warnings for SpaceGrotesk/PlusJakartaSans .ttf on web preview (falls back to system fonts). Cosmetic only, unrelated to date fix."]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "format.ts parseDateLocal correctly constructs a Local Date from YYYY-MM-DD, avoiding the UTC-midnight shift bug — implementation is correct and timezone-safe.",
+    "events.tsx and (tabs)/index.tsx both use the shared helpers (eventDateParts, formatEventDate) — good DRY.",
+    "Optional (non-blocking): add-event.tsx uses a plain text input for date (regex ^\\d{4}-\\d{2}-\\d{2}$). Consider a proper date picker for better UX; not required for this fix."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "100% (4/4 scenarios)"},
+  "seed_data_creation": "Created and cleaned up two temporary events during test: TEST_Xmas Aarti (2026-12-25) and TEST_NewYear (2027-01-01). Both were deleted at end of respective test runs. Seeded 'Ganpati Sthapana' (2026-06-15) left untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix for event date off-by-one is fully verified on Events screen (badge + full date) and on Dashboard Upcoming Events card. Backend was not modified/tested. Effective server 'today' during testing was ~29 Aug 2026, so any event dated before that will not appear under /dashboard upcoming_events — use a future date (e.g., 2027-xx-xx) when verifying the dashboard upcoming card.",
+  "rca_of_issue": "Root cause was `new Date('YYYY-MM-DD')` being parsed as UTC midnight, which shifts to the previous day when displayed in timezones behind UTC (e.g., IST is +5:30 which is safe, but many rendering paths on web could still misalign). Fix introduces parseDateLocal() that manually splits YYYY-MM-DD and constructs a Date in the local timezone via new Date(year, month-1, day). eventDateParts() and formatEventDate() both consume parseDateLocal, so both the badge (day/month) and the full date line stay consistent and never shift by a day. Verified by rendering seeded and newly-created events across three distinct dates (Jun/Dec/Jan) with no drift."
+}

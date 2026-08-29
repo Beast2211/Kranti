@@ -12,7 +12,7 @@ import { api, ApiError } from "@/src/api/client";
 import { fileUrl } from "@/src/api/upload";
 import { useToast } from "@/src/components/Toast";
 import { colors, fonts, fontSize, radius, spacing, shadow } from "@/src/theme";
-import { formatDate } from "@/src/utils/format";
+import { formatEventDate, eventDateParts } from "@/src/utils/format";
 
 const FILTERS = [
   { label: "All", value: "" },
@@ -63,18 +63,21 @@ export default function Events() {
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    const d = new Date(item.event_date);
+    const { day, month } = eventDateParts(item.event_date);
     const img = fileUrl(item.image_url, token);
     return (
       <View style={styles.card} testID={`event-card-${item.id}`}>
         {img ? <Image source={{ uri: img }} style={styles.banner} contentFit="cover" transition={200} /> : null}
         <View style={styles.cardRow}>
           <View style={styles.dateBadge}>
-            <Text style={styles.dateDay}>{isNaN(d.getTime()) ? "—" : d.getDate()}</Text>
-            <Text style={styles.dateMon}>{isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-IN", { month: "short" })}</Text>
+            <Text style={styles.dateDay}>{day}</Text>
+            <Text style={styles.dateMon}>{month}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.name} numberOfLines={1}>{item.event_name}</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              <Ionicons name="calendar-outline" size={12} color={colors.muted} /> {formatEventDate(item.event_date)}
+            </Text>
             <Text style={styles.meta} numberOfLines={1}>
               <Ionicons name="location-outline" size={12} color={colors.muted} /> {item.location || "Mandal"}
             </Text>

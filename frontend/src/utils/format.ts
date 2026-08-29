@@ -38,6 +38,34 @@ export function formatDateShort(iso?: string | null): string {
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 }
 
+// Parse a date-only string ("YYYY-MM-DD" or ISO) as a LOCAL date, avoiding the
+// UTC-midnight shift that makes dates appear one day off in some timezones.
+export function parseDateLocal(value?: string | null): Date | null {
+  if (!value) return null;
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Day / month / year parts for date badges (timezone-safe).
+export function eventDateParts(value?: string | null): { day: string; month: string; year: string } {
+  const d = parseDateLocal(value);
+  if (!d) return { day: "\u2014", month: "", year: "" };
+  return { day: String(d.getDate()), month: MONTHS_SHORT[d.getMonth()], year: String(d.getFullYear()) };
+}
+
+// Full readable event date, e.g. "15 Jun 2026" (timezone-safe).
+export function formatEventDate(value?: string | null): string {
+  const d = parseDateLocal(value);
+  if (!d) return "-";
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export function timeAgo(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso).getTime();
