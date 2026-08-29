@@ -44,6 +44,9 @@ strict backend-enforced RBAC, secure JWT auth, INR formatting.
 - [x] Event photos: admins attach a poster via gallery → Emergent Object Storage; shown as banner in Events list & thumbnail on Dashboard (backend /api/upload + /api/files with token auth) — 2026-06
 - [x] Payment receipts: one-tap shareable ₹ PDF receipt from any payment row (Vargani ledger + member detail) via expo-print/expo-sharing — 2026-06
 - [x] Event edit & delete: admins get Edit (prefilled form, PUT) and Delete (confirm dialog, soft delete) on every event card; new GET /api/events/{id} — 2026-06
+- [x] Member edit & delete (member detail screen) + Expense edit & delete (per-row) for admins, with confirm dialogs; new DELETE /api/members/{id}, GET /api/expenses/{id} — 2026-06
+- [x] Advance now counts as collected (reduces pending); dashboard total_collected includes advances — 2026-06
+- [x] Dashboard: added "Kranti Ganesh Mandal 2026" heading; removed Advance KPI (replaced with Collection %) — 2026-06
 
 ## Backlog / Remaining
 - P1: Receipt & event image uploads via cloud object storage (deferred per user).

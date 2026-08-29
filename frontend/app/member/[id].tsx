@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { AppHeader } from "@/src/components/AppHeader";
 import { Badge, Button, Card, ProgressBar, EmptyState } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
-import { api } from "@/src/api/client";
+import { api, ApiError } from "@/src/api/client";
 import { shareReceipt } from "@/src/utils/receipt";
 import { useToast } from "@/src/components/Toast";
 import { colors, fonts, fontSize, radius, spacing, shadow } from "@/src/theme";
@@ -22,6 +22,8 @@ export default function MemberDetail() {
   const [member, setMember] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -36,6 +38,20 @@ export default function MemberDetail() {
   }, [id]);
 
   useFocusEffect(useCallback(() => { setLoading(true); load(); }, [load]));
+
+  const doDelete = async () => {
+    setDeleting(true);
+    try {
+      await api.del(`/members/${id}`);
+      show("Member deleted", "success");
+      setConfirmDelete(false);
+      router.back();
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : "Delete failed", "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const pct = member?.target_amount > 0 ? (member.collected / member.target_amount) * 100 : 0;
 
@@ -94,6 +110,13 @@ export default function MemberDetail() {
             </View>
           </Card>
 
+          {isAdmin && (
+            <View style={styles.adminActions}>
+              <Button title="Edit" variant="outline" icon="create-outline" onPress={() => router.push(`/add-member?memberId=${id}`)} style={{ flex: 1 }} testID="edit-member-button" />
+              <Button title="Delete" variant="danger" icon="trash-outline" onPress={() => setConfirmDelete(true)} style={{ flex: 1 }} testID="delete-member-button" />
+            </View>
+          )}
+
           {isAdmin && member.status === "active" && (
             <Button title="Add Payment" icon="add" onPress={() => router.push(`/add-payment?memberId=${id}`)} testID="member-add-payment" />
           )}
@@ -120,6 +143,20 @@ export default function MemberDetail() {
           )}
         </ScrollView>
       )}
+
+      <Modal visible={confirmDelete} transparent animationType="fade" onRequestClose={() => setConfirmDelete(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setConfirmDelete(false)}>
+          <Pressable style={styles.confirmCard} onPress={() => {}}>
+            <View style={styles.confirmIcon}><Ionicons name="trash" size={26} color={colors.error} /></View>
+            <Text style={styles.confirmTitle}>Delete member?</Text>
+            <Text style={styles.confirmSub} numberOfLines={2}>"{member?.full_name}" and their record will be removed.</Text>
+            <View style={styles.confirmActions}>
+              <Button title="Cancel" variant="secondary" onPress={() => setConfirmDelete(false)} style={{ flex: 1 }} testID="cancel-delete-member" />
+              <Button title="Delete" variant="danger" onPress={doDelete} loading={deleting} style={{ flex: 1 }} testID="confirm-delete-member" />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -151,5 +188,12 @@ const styles = StyleSheet.create({
   payDate: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.muted, marginTop: 1 },
   payAmount: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: colors.success },
   receiptBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center", marginLeft: spacing.sm },
+  adminActions: { flexDirection: "row", gap: spacing.md },
+  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", padding: spacing.xl },
+  confirmCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.xl, width: "100%", maxWidth: 400, alignItems: "center" },
+  confirmIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: "#FEE2E2", alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+  confirmTitle: { fontFamily: fonts.bold, fontSize: fontSize.xl, color: colors.onSurface },
+  confirmSub: { fontFamily: fonts.regular, fontSize: fontSize.base, color: colors.muted, textAlign: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
+  confirmActions: { flexDirection: "row", gap: spacing.md, width: "100%" },
   emptyText: { fontFamily: fonts.regular, fontSize: fontSize.base, color: colors.muted },
 });

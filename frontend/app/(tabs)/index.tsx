@@ -20,7 +20,7 @@ import { useFetch } from "@/src/hooks/useFetch";
 import { fileUrl } from "@/src/api/upload";
 import { Card, ProgressBar, EmptyState } from "@/src/components/ui";
 import { colors, fonts, fontSize, radius, spacing, shadow, HERO_BG } from "@/src/theme";
-import { formatINR, formatCompact, formatDate, timeAgo } from "@/src/utils/format";
+import { formatINR, formatDate, timeAgo } from "@/src/utils/format";
 
 interface Dash {
   total_target: number;
@@ -77,6 +77,7 @@ export default function Dashboard() {
           style={StyleSheet.absoluteFill}
         />
         <View style={[styles.heroContent, { paddingTop: insets.top + spacing.lg }]}>
+          <Text style={styles.brandHeading}>Kranti Ganesh Mandal 2026</Text>
           <View style={styles.heroTopRow}>
             <View>
               <Text style={styles.greeting}>Namaste 🙏</Text>
@@ -137,7 +138,7 @@ export default function Dashboard() {
             <KpiCard icon="wallet" label="Net Balance" value={formatINR(d!.net_balance)} tint={d!.net_balance >= 0 ? colors.success : colors.error} />
             <KpiCard icon="trending-down" label="Total Expenses" value={formatINR(d!.total_expenses)} tint={colors.error} />
             <KpiCard icon="people" label="Active Members" value={String(d!.member_count)} tint={colors.brand} />
-            <KpiCard icon="hourglass" label="Advance" value={formatCompact(d!.total_advance)} tint={colors.brandSecondary} />
+            <KpiCard icon="pie-chart" label="Collection" value={`${d!.collection_percent}%`} tint={colors.brandSecondary} />
           </View>
 
           {/* Quick actions (admin) */}
@@ -247,6 +248,7 @@ function KpiCard({ icon, label, value, tint }: { icon: any; label: string; value
 const styles = StyleSheet.create({
   heroWrap: { overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   heroContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
+  brandHeading: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: "#FFF", textAlign: "center", marginBottom: spacing.md, letterSpacing: 0.3 },
   heroTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg },
   greeting: { fontFamily: fonts.regular, fontSize: fontSize.base, color: "rgba(255,255,255,0.85)" },
   heroName: { fontFamily: fonts.bold, fontSize: fontSize.xl, color: "#FFF" },

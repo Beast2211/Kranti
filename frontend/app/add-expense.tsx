@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Button, Field } from "@/src/components/ui";
@@ -21,6 +21,8 @@ export default function AddExpense() {
   const { show } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { expenseId } = useLocalSearchParams<{ expenseId?: string }>();
+  const isEdit = !!expenseId;
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -30,21 +32,40 @@ export default function AddExpense() {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!expenseId) return;
+    api.get(`/expenses/${expenseId}`).then((e) => {
+      setTitle(e.title || "");
+      setCategory(e.category || null);
+      setAmount(e.amount ? String(e.amount) : "");
+      setVendor(e.vendor || "");
+      setPaidBy(e.paid_by || "");
+      setMode(e.payment_mode || "Cash");
+      setDescription(e.description || "");
+    }).catch(() => show("Could not load expense", "error"));
+  }, [expenseId, show]);
+
   const submit = async () => {
     if (!title.trim()) return show("Enter expense title", "error");
     if (!category) return show("Select a category", "error");
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) return show("Enter a valid amount", "error");
     setLoading(true);
+    const body = {
+      title, category, amount: amt, vendor: vendor || null,
+      paid_by: paidBy || null, payment_mode: mode, description: description || null,
+    };
     try {
-      await api.post("/expenses", {
-        title, category, amount: amt, vendor: vendor || null,
-        paid_by: paidBy || null, payment_mode: mode, description: description || null,
-      });
-      show("Expense added successfully", "success");
+      if (isEdit) {
+        await api.put(`/expenses/${expenseId}`, body);
+        show("Expense updated successfully", "success");
+      } else {
+        await api.post("/expenses", body);
+        show("Expense added successfully", "success");
+      }
       router.back();
     } catch (e) {
-      show(e instanceof ApiError ? e.message : "Failed to add expense", "error");
+      show(e instanceof ApiError ? e.message : "Failed to save expense", "error");
     } finally {
       setLoading(false);
     }
@@ -53,7 +74,7 @@ export default function AddExpense() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.modalHeader, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.title}>Add Expense</Text>
+        <Text style={styles.title}>{isEdit ? "Edit Expense" : "Add Expense"}</Text>
         <Pressable onPress={() => router.back()} hitSlop={12} testID="close-modal">
           <Ionicons name="close" size={26} color={colors.onSurface} />
         </Pressable>
@@ -71,7 +92,7 @@ export default function AddExpense() {
         <Picker label="Payment Mode" value={mode} options={MODES} onChange={setMode} icon="wallet-outline" testID="expense-mode-picker" />
         <Field label="Description (optional)" placeholder="Notes" value={description} onChangeText={setDescription} multiline testID="expense-description-input" />
 
-        <Button title="Add Expense" onPress={submit} loading={loading} icon="checkmark" testID="expense-submit-button" />
+        <Button title={isEdit ? "Save Changes" : "Add Expense"} onPress={submit} loading={loading} icon="checkmark" testID="expense-submit-button" />
       </KeyboardAwareScrollView>
     </View>
   );

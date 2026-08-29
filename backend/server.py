@@ -144,7 +144,7 @@ def public_user(u: dict) -> dict:
     }
 
 
-async def member_collected(member_id: str) -> float:
+async def member_payments_sum(member_id: str) -> float:
     cur = payments.aggregate([
         {"$match": {"member_id": member_id, "deleted_at": None}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
@@ -154,9 +154,10 @@ async def member_collected(member_id: str) -> float:
 
 
 async def enrich_member(m: dict) -> dict:
-    collected = await member_collected(m["id"])
+    paid = await member_payments_sum(m["id"])
     target = float(m.get("target_amount", 0) or 0)
     advance = float(m.get("advance_amount", 0) or 0)
+    collected = advance + paid  # advance is treated as already collected
     pending = target - collected
     return {
         "id": m["id"],
@@ -169,6 +170,7 @@ async def enrich_member(m: dict) -> dict:
         "status": m.get("status"),
         "target_amount": target,
         "advance_amount": advance,
+        "paid_amount": paid,
         "collected": collected,
         "pending": pending,
         "created_at": m.get("created_at"),
@@ -548,6 +550,18 @@ async def update_member(member_id: str, body: MemberUpdate, user: dict = Depends
     return await enrich_member(doc)
 
 
+@api.delete("/members/{member_id}")
+async def delete_member(member_id: str, user: dict = Depends(require_roles(*ADMIN_ROLES))):
+    m = await members.find_one({"id": member_id, "deleted_at": None})
+    if not m:
+        raise HTTPException(status_code=404, detail="Member not found")
+    await members.update_one({"id": member_id}, {"$set": {"deleted_at": iso(now())}})
+    if m.get("profile_id"):
+        await users.update_one({"id": m["profile_id"]}, {"$set": {"status": "deactivated"}, "$inc": {"token_version": 1}})
+    await write_audit(user, "MEMBER_DELETED", "members", member_id, f"Deleted {m.get('full_name')}")
+    return {"message": "Member deleted"}
+
+
 @api.post("/members/{member_id}/approve")
 async def approve_member(member_id: str, user: dict = Depends(require_roles(*ADMIN_ROLES))):
     m = await members.find_one({"id": member_id, "deleted_at": None})
@@ -631,7 +645,9 @@ async def create_payment(body: PaymentCreate, user: dict = Depends(require_roles
     m = await members.find_one({"id": body.member_id, "deleted_at": None})
     if not m:
         raise HTTPException(status_code=404, detail="Member not found")
-    collected = await member_collected(body.member_id)
+    paid = await member_payments_sum(body.member_id)
+    advance = float(m.get("advance_amount", 0) or 0)
+    collected = advance + paid
     pending = float(m.get("target_amount", 0) or 0) - collected
     if not body.allow_overpay and body.amount > pending and pending >= 0:
         raise HTTPException(
@@ -736,6 +752,14 @@ async def list_expenses(
         ]
     cur = expenses.find(q, {"_id": 0}).sort("expense_date", -1)
     return await cur.to_list(1000)
+
+
+@api.get("/expenses/{expense_id}")
+async def get_expense(expense_id: str, user: dict = Depends(current_user)):
+    e = await expenses.find_one({"id": expense_id, "deleted_at": None}, {"_id": 0})
+    if not e:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    return e
 
 
 @api.post("/expenses")
@@ -912,7 +936,8 @@ async def _sum(collection, match: dict, field: str) -> float:
 async def dashboard(user: dict = Depends(current_user)):
     total_target = await _sum(members, {"deleted_at": None, "status": "active"}, "target_amount")
     total_advance = await _sum(members, {"deleted_at": None, "status": "active"}, "advance_amount")
-    total_collected = await _sum(payments, {"deleted_at": None}, "amount")
+    total_paid = await _sum(payments, {"deleted_at": None}, "amount")
+    total_collected = total_paid + total_advance  # advance counts as collected
     total_expenses = await _sum(expenses, {"deleted_at": None}, "amount")
     total_pending = total_target - total_collected
     net_balance = total_collected - total_expenses
