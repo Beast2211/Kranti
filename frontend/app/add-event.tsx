@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { Button, Field } from "@/src/components/ui";
 import { Picker } from "@/src/components/Picker";
+import { DatePickerField } from "@/src/components/DatePickerField";
 import { useToast } from "@/src/components/Toast";
 import { api, ApiError } from "@/src/api/client";
 import { uploadImage, fileUrl } from "@/src/api/upload";
@@ -153,7 +154,7 @@ export default function AddEvent() {
         </Pressable>
 
         <Field label="Event Name" placeholder="e.g. Ganpati Sthapana" icon="calendar-outline" value={name} onChangeText={setName} testID="event-name-input" />
-        <Field label="Event Date" placeholder="YYYY-MM-DD" icon="today-outline" value={date} onChangeText={setDate} testID="event-date-input" />
+        <DatePickerField label="Event Date" value={date} onChange={setDate} testID="event-date-input" />
         <View style={styles.rowSplit}>
           <View style={{ flex: 1 }}>
             <Field label="Start Time" placeholder="10:00 AM" value={startTime} onChangeText={setStartTime} testID="event-start-input" />

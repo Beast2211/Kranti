@@ -964,6 +964,20 @@ async def dashboard(user: dict = Depends(current_user)):
     act_cur = audit_logs.find({}, {"_id": 0}).sort("created_at", -1).limit(8)
     recent = await act_cur.to_list(8)
 
+    # Member's own Vargani summary (for payment reminder banner)
+    my_vargani = None
+    my_member = await members.find_one(
+        {"profile_id": user["id"], "deleted_at": None}, {"_id": 0}
+    )
+    if my_member:
+        enriched = await enrich_member(my_member)
+        my_vargani = {
+            "full_name": enriched["full_name"],
+            "target_amount": enriched["target_amount"],
+            "collected": enriched["collected"],
+            "pending": enriched["pending"],
+        }
+
     return {
         "total_target": total_target,
         "total_collected": total_collected,
@@ -976,6 +990,7 @@ async def dashboard(user: dict = Depends(current_user)):
         "collection_percent": round((total_collected / total_target * 100) if total_target > 0 else 0, 1),
         "upcoming_events": upcoming,
         "recent_activity": recent,
+        "my_vargani": my_vargani,
     }
 
 

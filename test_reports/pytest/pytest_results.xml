@@ -1,1 +1,107 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="40" time="6.273" timestamp="2026-08-29T06:31:57.865290+00:00" hostname="agent-env-52886d0f-7e03-497d-8d15-255813f2ae59"><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_super_admin_login" time="0.383" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_auth_me_super_admin" time="0.095" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_member_self_register_pending" time="0.342" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_pending_member_login_blocked" time="0.321" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_invalid_login" time="0.315" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_can_list_admins" time="0.138" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_creates_admin" time="0.331" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_new_admin_can_login" time="0.324" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_admin_cannot_list_admins" time="0.115" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_admin_cannot_view_audit_logs" time="0.101" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_can_view_audit_logs" time="0.116" /><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_admin_creates_member_a" time="0.133" /><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_admin_creates_member_b" time="0.103" /><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_list_members_search" time="0.094" /><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_approve_pending_member" time="0.198" /><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_approved_member_can_login" time="0.333" /><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_member" time="0.103" /><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_payment" time="0.099" /><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_expense" time="0.146" /><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_event" time="0.144" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_add_partial_payment_member_a" time="0.162" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_member_a_pending_is_6000" time="0.096" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_overpay_rejected" time="0.096" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_overpay_allowed_with_flag" time="0.096" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_full_payment_member_b" time="0.192" /><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_invalid_payment_mode" time="0.092" /><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_create_expense" time="0.146" /><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_list_expenses_filter" time="0.109" /><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_invalid_category" time="0.087" /><testcase classname="tests.test_kranti_mandal.TestEvents" name="test_create_upcoming_event" time="0.144" /><testcase classname="tests.test_kranti_mandal.TestEvents" name="test_list_events" time="0.110" /><testcase classname="tests.test_kranti_mandal.TestDashboard" name="test_dashboard_totals" time="0.152" /><testcase classname="tests.test_kranti_mandal.TestReports" name="test_vargani_report" time="0.105" /><testcase classname="tests.test_kranti_mandal.TestReports" name="test_expenses_report" time="0.093" /><testcase classname="tests.test_kranti_mandal.TestReports" name="test_events_report" time="0.102" /><testcase classname="tests.test_kranti_mandal.TestReports" name="test_vargani_csv_export" time="0.097" /><testcase classname="tests.test_kranti_mandal.TestReports" name="test_expense_csv_export" time="0.096" /><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_admin_notifications_has_registration" time="0.095" /><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_member_notifications_has_approval" time="0.103" /><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_mark_all_read" time="0.100" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="35" skipped="0" tests="42" time="2.277" timestamp="2026-08-30T10:05:51.177308+00:00" hostname="agent-env-52886d0f-7e03-497d-8d15-255813f2ae59"><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_add_partial_payment_member_a" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:190: in test_add_partial_payment_member_a
+    r = requests.post(f"{API}/payments", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_can_list_admins" time="0.000"><failure message="KeyError: 'sa_token'">backend/tests/test_kranti_mandal.py:67: in test_super_admin_can_list_admins
+    r = requests.get(f"{API}/admins", headers=_auth(state["sa_token"]), timeout=30)
+                                                    ^^^^^^^^^^^^^^^^^
+E   KeyError: 'sa_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_creates_admin" time="0.000"><failure message="KeyError: 'sa_token'">backend/tests/test_kranti_mandal.py:75: in test_super_admin_creates_admin
+    r = requests.post(f"{API}/admins", headers=_auth(state["sa_token"]), json={
+                                                     ^^^^^^^^^^^^^^^^^
+E   KeyError: 'sa_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_member_a_pending_is_6000" time="0.000"><failure message="KeyError: 'member_a_id'">backend/tests/test_kranti_mandal.py:196: in test_member_a_pending_is_6000
+    r = requests.get(f"{API}/members/{state['member_a_id']}", headers=_auth(state["admin_token"]), timeout=30)
+                                      ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_a_id'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_new_admin_can_login" time="0.558"><failure message="AssertionError: {&quot;detail&quot;:&quot;Invalid User ID or Password.&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_kranti_mandal.py:89: in test_new_admin_can_login
+    assert r.status_code == 200, r.text
+E   AssertionError: {"detail":"Invalid User ID or Password."}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_overpay_rejected" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:203: in test_overpay_rejected
+    r = requests.post(f"{API}/payments", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_overpay_allowed_with_flag" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:210: in test_overpay_allowed_with_flag
+    r = requests.post(f"{API}/payments", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_full_payment_member_b" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:216: in test_full_payment_member_b
+    r = requests.post(f"{API}/payments", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestVargani" name="test_invalid_payment_mode" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:224: in test_invalid_payment_mode
+    r = requests.post(f"{API}/payments", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_super_admin_login" time="0.315" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_auth_me_super_admin" time="0.230" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_admin_cannot_list_admins" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:94: in test_admin_cannot_list_admins
+    r = requests.get(f"{API}/admins", headers=_auth(state["admin_token"]), timeout=30)
+                                                    ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_member_self_register_pending" time="0.543" /><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_admin_cannot_view_audit_logs" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:98: in test_admin_cannot_view_audit_logs
+    r = requests.get(f"{API}/audit-logs", headers=_auth(state["admin_token"]), timeout=30)
+                                                        ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestAdminManagement" name="test_super_admin_can_view_audit_logs" time="0.000"><failure message="KeyError: 'sa_token'">backend/tests/test_kranti_mandal.py:102: in test_super_admin_can_view_audit_logs
+    r = requests.get(f"{API}/audit-logs", headers=_auth(state["sa_token"]), timeout=30)
+                                                        ^^^^^^^^^^^^^^^^^
+E   KeyError: 'sa_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_admin_creates_member_a" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:111: in test_admin_creates_member_a
+    r = requests.post(f"{API}/members", headers=_auth(state["admin_token"]), json={
+                                                      ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_admin_creates_member_b" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:125: in test_admin_creates_member_b
+    r = requests.post(f"{API}/members", headers=_auth(state["admin_token"]), json={
+                                                      ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_list_members_search" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:134: in test_list_members_search
+    r = requests.get(f"{API}/members?search=TEST", headers=_auth(state["admin_token"]), timeout=30)
+                                                                 ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_approve_pending_member" time="0.000"><failure message="KeyError: 'sa_token'">backend/tests/test_kranti_mandal.py:141: in test_approve_pending_member
+    r = requests.get(f"{API}/members?status=pending", headers=_auth(state["sa_token"]), timeout=30)
+                                                                    ^^^^^^^^^^^^^^^^^
+E   KeyError: 'sa_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestMembers" name="test_approved_member_can_login" time="0.000"><failure message="KeyError: 'member_mobile'">backend/tests/test_kranti_mandal.py:153: in test_approved_member_can_login
+    "identifier": state["member_mobile"], "password": state["member_password"],
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_mobile'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestReports" name="test_vargani_report" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:284: in test_vargani_report
+    r = requests.get(f"{API}/reports/vargani", headers=_auth(state["admin_token"]), timeout=30)
+                                                             ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestReports" name="test_expenses_report" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:291: in test_expenses_report
+    r = requests.get(f"{API}/reports/expenses", headers=_auth(state["admin_token"]), timeout=30)
+                                                              ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestReports" name="test_events_report" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:296: in test_events_report
+    r = requests.get(f"{API}/reports/events", headers=_auth(state["admin_token"]), timeout=30)
+                                                            ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestReports" name="test_vargani_csv_export" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:301: in test_vargani_csv_export
+    r = requests.get(f"{API}/reports/vargani/export", headers=_auth(state["admin_token"]), timeout=30)
+                                                                    ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestReports" name="test_expense_csv_export" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:307: in test_expense_csv_export
+    r = requests.get(f"{API}/reports/expenses/export", headers=_auth(state["admin_token"]), timeout=30)
+                                                                     ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_member" time="0.000"><failure message="KeyError: 'member_token'">backend/tests/test_kranti_mandal.py:163: in test_member_cannot_create_member
+    r = requests.post(f"{API}/members", headers=_auth(state["member_token"]), json={
+                                                      ^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_payment" time="0.000"><failure message="KeyError: 'member_token'">backend/tests/test_kranti_mandal.py:169: in test_member_cannot_create_payment
+    r = requests.post(f"{API}/payments", headers=_auth(state["member_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_expense" time="0.000"><failure message="KeyError: 'member_token'">backend/tests/test_kranti_mandal.py:175: in test_member_cannot_create_expense
+    r = requests.post(f"{API}/expenses", headers=_auth(state["member_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestRBAC" name="test_member_cannot_create_event" time="0.000"><failure message="KeyError: 'member_token'">backend/tests/test_kranti_mandal.py:181: in test_member_cannot_create_event
+    r = requests.post(f"{API}/events", headers=_auth(state["member_token"]), json={
+                                                     ^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_create_expense" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:233: in test_create_expense
+    r = requests.post(f"{API}/expenses", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_list_expenses_filter" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:240: in test_list_expenses_filter
+    r = requests.get(f"{API}/expenses?category=Decoration", headers=_auth(state["admin_token"]), timeout=30)
+                                                                          ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestExpenses" name="test_invalid_category" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:245: in test_invalid_category
+    r = requests.post(f"{API}/expenses", headers=_auth(state["admin_token"]), json={
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_admin_notifications_has_registration" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:315: in test_admin_notifications_has_registration
+    r = requests.get(f"{API}/notifications", headers=_auth(state["admin_token"]), timeout=30)
+                                                           ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_member_notifications_has_approval" time="0.000"><failure message="KeyError: 'member_token'">backend/tests/test_kranti_mandal.py:321: in test_member_notifications_has_approval
+    r = requests.get(f"{API}/notifications", headers=_auth(state["member_token"]), timeout=30)
+                                                           ^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'member_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestNotifications" name="test_mark_all_read" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:327: in test_mark_all_read
+    r = requests.post(f"{API}/notifications/read-all", headers=_auth(state["admin_token"]), timeout=30)
+                                                                     ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestEvents" name="test_create_upcoming_event" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:254: in test_create_upcoming_event
+    r = requests.post(f"{API}/events", headers=_auth(state["admin_token"]), json={
+                                                     ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_kranti_mandal.TestEvents" name="test_list_events" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:261: in test_list_events
+    r = requests.get(f"{API}/events?status=Upcoming", headers=_auth(state["admin_token"]), timeout=30)
+                                                                    ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase><testcase classname="tests.test_my_vargani.TestDashboardMyVargani" name="test_super_admin_my_vargani_is_null" time="0.506" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_pending_member_login_blocked" time="0.342" /><testcase classname="tests.test_my_vargani.TestDashboardMyVargani" name="test_member_my_vargani_object" time="0.689" /><testcase classname="tests.test_kranti_mandal.TestAuth" name="test_invalid_login" time="0.438" /><testcase classname="tests.test_kranti_mandal.TestDashboard" name="test_dashboard_totals" time="0.000"><failure message="KeyError: 'admin_token'">backend/tests/test_kranti_mandal.py:269: in test_dashboard_totals
+    r = requests.get(f"{API}/dashboard", headers=_auth(state["admin_token"]), timeout=30)
+                                                       ^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'admin_token'</failure></testcase></testsuite></testsuites>

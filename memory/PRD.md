@@ -50,6 +50,8 @@ strict backend-enforced RBAC, secure JWT auth, INR formatting.
 - [x] Vargani payment edit & delete (Vargani ledger + member payment history) for admins, with confirm dialogs; new GET /api/payments/{id}; edit/delete recalculate collected & pending automatically — 2026-06
 - [x] Login screen: Ganesha hero image added above "Kranti Ganesh Mandal" title (assets/images/ganesha-hero.jpg) — verified rendering — 2026-06
 - [x] Fixed event date display (timezone off-by-one): date-only strings now parsed as local dates via parseDateLocal/eventDateParts/formatEventDate; events list & dashboard cards show correct badge + full date (e.g. "15 Jun 2026") — verified by testing agent — 2026-06
+- [x] Calendar date picker for events: custom cross-platform DatePickerField (month grid, prev/next nav, today highlight) replaces manual YYYY-MM-DD text on Add/Edit Event — verified — 2026-06
+- [x] Member payment reminder: dashboard shows each member their own pending Vargani balance ("₹X left of ₹Y target") with tap-through to Vargani, or a "fully paid" thank-you card; backend /api/dashboard returns my_vargani for member users — verified — 2026-06
 
 ## Backlog / Remaining
 - P1: Receipt & event image uploads via cloud object storage (deferred per user).

@@ -34,6 +34,12 @@ interface Dash {
   collection_percent: number;
   upcoming_events: any[];
   recent_activity: any[];
+  my_vargani: {
+    full_name: string;
+    target_amount: number;
+    collected: number;
+    pending: number;
+  } | null;
 }
 
 const ACTION_ICONS: Record<string, any> = {
@@ -140,6 +146,36 @@ export default function Dashboard() {
             <KpiCard icon="people" label="Active Members" value={String(d!.member_count)} tint={colors.brand} />
             <KpiCard icon="pie-chart" label="Collection" value={`${d!.collection_percent}%`} tint={colors.brandSecondary} />
           </View>
+
+          {/* Payment reminder (member's own Vargani) */}
+          {!isAdmin && d!.my_vargani && d!.my_vargani.target_amount > 0 && (
+            d!.my_vargani.pending > 0 ? (
+              <Pressable onPress={() => router.push("/vargani")} testID="payment-reminder-banner">
+                <Card style={styles.reminderBanner}>
+                  <View style={styles.reminderIcon}>
+                    <Ionicons name="cash-outline" size={22} color={colors.brand} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reminderTitle}>Your Vargani is pending</Text>
+                    <Text style={styles.reminderSub}>
+                      {formatINR(d!.my_vargani.pending)} left of {formatINR(d!.my_vargani.target_amount)} target
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.brand} />
+                </Card>
+              </Pressable>
+            ) : (
+              <Card style={styles.reminderDone} testID="payment-reminder-done">
+                <View style={[styles.reminderIcon, { backgroundColor: colors.success + "1A" }]}>
+                  <Ionicons name="checkmark-circle" size={22} color={colors.success} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.reminderTitle, { color: colors.success }]}>Vargani fully paid 🙏</Text>
+                  <Text style={styles.reminderSub}>Thank you! {formatINR(d!.my_vargani.collected)} contributed</Text>
+                </View>
+              </Card>
+            )
+          )}
 
           {/* Quick actions (admin) */}
           {isAdmin && (
@@ -294,6 +330,11 @@ const styles = StyleSheet.create({
   actionLabel: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurface, flexShrink: 1 },
   approvalBanner: { flexDirection: "row", alignItems: "center", gap: spacing.md, backgroundColor: colors.surfaceTertiary, borderColor: colors.brandTertiary },
   approvalText: { flex: 1, fontFamily: fonts.semibold, fontSize: fontSize.base, color: colors.onSurfaceTertiary },
+  reminderBanner: { flexDirection: "row", alignItems: "center", gap: spacing.md, backgroundColor: colors.surfaceTertiary, borderColor: colors.brandTertiary, marginBottom: spacing.md },
+  reminderDone: { flexDirection: "row", alignItems: "center", gap: spacing.md, backgroundColor: "#F0FDF4", borderColor: "#BBF7D0", marginBottom: spacing.md },
+  reminderIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.brand + "1A" },
+  reminderTitle: { fontFamily: fonts.bold, fontSize: fontSize.base, color: colors.onSurface },
+  reminderSub: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.muted, marginTop: 2 },
   eventCard: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   dateBadge: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center" },
   eventThumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary },
