@@ -37,9 +37,10 @@ function RootNavigator() {
   useEffect(() => {
     if (loading) return;
     const inAuth = segments[0] === "(auth)";
+    const atRoot = segments.length === 0 || segments[0] === "index";
     if (!user && !inAuth) {
       router.replace("/(auth)/login");
-    } else if (user && inAuth) {
+    } else if (user && (inAuth || atRoot)) {
       router.replace("/(tabs)");
     }
   }, [user, loading, segments, router]);

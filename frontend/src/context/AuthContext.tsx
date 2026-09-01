@@ -1,5 +1,23 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, setToken, clearToken, getToken } from "@/src/api/client";
+import { api, setToken, clearToken, getToken, ApiError } from "@/src/api/client";
+import { storage } from "@/src/utils/storage";
+
+const USER_KEY = "kranti_user";
+
+async function cacheUser(user: User | null): Promise<void> {
+  if (user) await storage.setItem(USER_KEY, JSON.stringify(user));
+  else await storage.removeItem(USER_KEY);
+}
+
+async function readCachedUser(): Promise<User | null> {
+  const raw = await storage.getItem<string | null>(USER_KEY, null);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    return null;
+  }
+}
 
 export type Role = "super_admin" | "admin" | "member";
 
@@ -39,11 +57,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setTokenState(t);
+
+    // Show the app immediately using the cached user so reopening never
+    // hangs on a white screen, even on a slow or offline network.
+    const cached = await readCachedUser();
+    if (cached) {
+      setUser(cached);
+      setLoading(false);
+      // Validate/refresh in the background — don't block the UI.
+      try {
+        const me = await api.get("/auth/me");
+        setUser(me);
+        await cacheUser(me);
+      } catch (e) {
+        // Only log out when the server explicitly rejects the token.
+        // Network/timeout errors keep the cached session intact.
+        if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+          await clearToken();
+          await cacheUser(null);
+          setUser(null);
+          setTokenState(null);
+        }
+      }
+      return;
+    }
+
+    // No cached user (e.g. first launch after update): must validate before entering.
     try {
       const me = await api.get("/auth/me");
       setUser(me);
-    } catch {
-      await clearToken();
+      await cacheUser(me);
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        await clearToken();
+        await cacheUser(null);
+      }
       setUser(null);
       setTokenState(null);
     } finally {
@@ -58,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (identifier: string, password: string) => {
     const res = await api.post("/auth/login", { identifier, password });
     await setToken(res.access_token);
+    await cacheUser(res.user);
     setTokenState(res.access_token);
     setUser(res.user);
     return res.user as User;
@@ -68,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await api.post("/auth/logout");
     } catch {}
     await clearToken();
+    await cacheUser(null);
     setUser(null);
     setTokenState(null);
   }, []);
@@ -76,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const me = await api.get("/auth/me");
       setUser(me);
+      await cacheUser(me);
     } catch {}
   }, []);
 

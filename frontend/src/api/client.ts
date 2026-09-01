@@ -22,19 +22,24 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method: string, path: string, body?: any): Promise<any> {
+async function request(method: string, path: string, body?: any, timeoutMs = 15000): Promise<any> {
   const token = await getToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res: Response;
   try {
     res = await fetch(`${BASE}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
   } catch (e) {
     throw new ApiError(0, "Unable to connect. Please try again.");
+  } finally {
+    clearTimeout(timer);
   }
   const text = await res.text();
   let data: any = null;

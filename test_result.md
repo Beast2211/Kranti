@@ -101,3 +101,12 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+## BUG FIX (2026-06): App stuck on white screen / loading spinner when reopened while logged in
+- Root cause: root `app/index.tsx` only renders a spinner and relies on `RootNavigator` (app/_layout.tsx) to redirect. The auth guard had NO branch for a logged-in user sitting on the `index`/root route, so on cold reopen the user stayed on the index spinner forever.
+- Fixes applied:
+  1. app/_layout.tsx — guard now redirects authenticated users from `(auth)` OR root/index to `/(tabs)`.
+  2. src/api/client.ts — added 15s AbortController timeout so a stalled `/auth/me` request can never hang the bootstrap.
+  3. src/context/AuthContext.tsx — caches the user (kranti_user); on reopen it renders instantly from cache and validates `/auth/me` in the background; only logs out on explicit 401/403 (network/timeout keeps the session).
+- Verified by main agent on web reload: login -> reload -> dashboard visible in ~1s (no hang).
+- Needs testing_agent verification: reopen-while-logged-in for both admin and member; logout still returns to login; invalid/expired token routes to login.
