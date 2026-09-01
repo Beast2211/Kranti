@@ -63,3 +63,6 @@ strict backend-enforced RBAC, secure JWT auth, INR formatting.
 
 ## Next Tasks
 - Gather user feedback on flows; wire image uploads if requested.
+
+## Deployment
+- [x] Fixed deployment failure: root .gitignore was excluding frontend/.env and backend/.env from the deploy package (broke EXPO_PUBLIC_BACKEND_URL injection + backend config). Added negations `!frontend/.env` and `!backend/.env`. Health check now passes with no blockers — 2026-06

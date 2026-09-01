@@ -83,6 +83,9 @@ android-sdk/
 .env
 .env.*
 *.env
+# Keep the app's required env files in the deployment context
+!frontend/.env
+!backend/.env
 credentials.json
 *.key
 .credentials
