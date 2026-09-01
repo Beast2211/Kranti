@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,7 +15,7 @@ import { formatINR, formatDate } from "@/src/utils/format";
 
 export default function MemberDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const { show } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -26,6 +26,10 @@ export default function MemberDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmPayment, setConfirmPayment] = useState<any>(null);
   const [deletingPayment, setDeletingPayment] = useState(false);
+  const [resetPasswordVisible, setResetPasswordVisible] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +60,33 @@ export default function MemberDetail() {
   };
 
   const pct = member?.target_amount > 0 ? (member.collected / member.target_amount) * 100 : 0;
+
+  const doResetPassword = async () => {
+    if (resetPassword.length < 6) {
+      show("Password must be at least 6 characters", "error");
+      return;
+    }
+    if (resetPassword !== resetPasswordConfirm) {
+      show("Passwords do not match", "error");
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      await api.post(`/members/${id}/reset-password`, {
+        new_password: resetPassword,
+        confirm_password: resetPasswordConfirm,
+      });
+      show(member?.profile_id ? "Member password reset successfully" : "Login created successfully", "success");
+      setResetPassword("");
+      setResetPasswordConfirm("");
+      setResetPasswordVisible(false);
+      load();
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : "Password reset failed", "error");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const doDeletePayment = async () => {
     if (!confirmPayment) return;
@@ -131,6 +162,9 @@ export default function MemberDetail() {
             <View style={styles.adminActions}>
               <Button title="Edit" variant="outline" icon="create-outline" onPress={() => router.push(`/add-member?memberId=${id}`)} style={{ flex: 1 }} testID="edit-member-button" />
               <Button title="Delete" variant="danger" icon="trash-outline" onPress={() => setConfirmDelete(true)} style={{ flex: 1 }} testID="delete-member-button" />
+              {isSuperAdmin ? (
+                <Button title={member.profile_id ? "Reset Password" : "Set Password"} variant="outline" icon="key-outline" onPress={() => setResetPasswordVisible(true)} style={{ flex: 1 }} testID="reset-member-password-button" />
+              ) : null}
             </View>
           )}
 
@@ -189,6 +223,40 @@ export default function MemberDetail() {
         </Pressable>
       </Modal>
 
+      <Modal visible={resetPasswordVisible} transparent animationType="fade" onRequestClose={() => !resettingPassword && setResetPasswordVisible(false)}>
+        <Pressable style={styles.backdrop} onPress={() => !resettingPassword && setResetPasswordVisible(false)}>
+          <Pressable style={styles.confirmCard} onPress={() => {}}>
+            <View style={styles.resetIcon}><Ionicons name="key" size={26} color={colors.brand} /></View>
+            <Text style={styles.confirmTitle}>{member?.profile_id ? "Reset member password" : "Create login password"}</Text>
+            <Text style={styles.confirmSub}>{member?.profile_id ? `Set a new password for ${member?.full_name || "this member"}. Existing sessions will be signed out.` : `Create a login for ${member?.full_name || "this member"}. They can sign in with their mobile number and this password.`}</Text>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="New password (min. 6 characters)"
+              placeholderTextColor={colors.muted}
+              value={resetPassword}
+              onChangeText={setResetPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              testID="reset-member-password-input"
+            />
+            <TextInput
+              style={[styles.passwordInput, { marginTop: spacing.sm }]}
+              placeholder="Confirm new password"
+              placeholderTextColor={colors.muted}
+              value={resetPasswordConfirm}
+              onChangeText={setResetPasswordConfirm}
+              secureTextEntry
+              autoCapitalize="none"
+              testID="reset-member-password-confirm-input"
+            />
+            <View style={[styles.confirmActions, { marginTop: spacing.lg }]}> 
+              <Button title="Cancel" variant="secondary" onPress={() => setResetPasswordVisible(false)} disabled={resettingPassword} style={{ flex: 1 }} testID="cancel-reset-member-password" />
+              <Button title={member?.profile_id ? "Reset" : "Create"} onPress={doResetPassword} loading={resettingPassword} style={{ flex: 1 }} testID="confirm-reset-member-password" />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Modal visible={!!confirmPayment} transparent animationType="fade" onRequestClose={() => setConfirmPayment(null)}>
         <Pressable style={styles.backdrop} onPress={() => setConfirmPayment(null)}>
           <Pressable style={styles.confirmCard} onPress={() => {}}>
@@ -237,12 +305,14 @@ const styles = StyleSheet.create({
   payDate: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.muted, marginTop: 1 },
   payAmount: { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: colors.success },
   receiptBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center", marginLeft: spacing.sm },
-  adminActions: { flexDirection: "row", gap: spacing.md },
+  adminActions: { flexDirection: "row", gap: spacing.md, flexWrap: "wrap" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", padding: spacing.xl },
   confirmCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.xl, width: "100%", maxWidth: 400, alignItems: "center" },
   confirmIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: "#FEE2E2", alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+  resetIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
   confirmTitle: { fontFamily: fonts.bold, fontSize: fontSize.xl, color: colors.onSurface },
   confirmSub: { fontFamily: fonts.regular, fontSize: fontSize.base, color: colors.muted, textAlign: "center", marginTop: spacing.sm, marginBottom: spacing.xl },
   confirmActions: { flexDirection: "row", gap: spacing.md, width: "100%" },
+  passwordInput: { width: "100%", height: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, color: colors.onSurface, fontFamily: fonts.regular, fontSize: fontSize.base },
   emptyText: { fontFamily: fonts.regular, fontSize: fontSize.base, color: colors.muted },
 });

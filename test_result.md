@@ -110,3 +110,14 @@
   3. src/context/AuthContext.tsx — caches the user (kranti_user); on reopen it renders instantly from cache and validates `/auth/me` in the background; only logs out on explicit 401/403 (network/timeout keeps the session).
 - Verified by main agent on web reload: login -> reload -> dashboard visible in ~1s (no hang).
 - Needs testing_agent verification: reopen-while-logged-in for both admin and member; logout still returns to login; invalid/expired token routes to login.
+
+
+## BUG FIXES (2026-06): Member delete re-add + Super admin set/reset member password
+- Issue 1: Deleting a member only DEACTIVATED the linked user, so re-adding a member with the same mobile AND a password failed with "already registered". Fix (backend/server.py):
+  - `delete_member` now HARD-DELETES the linked member login (`users.delete_one({id: profile_id, role: member})`), fully freeing the mobile.
+  - `create_member` simplified: blocks if any user with that mobile exists, else creates a fresh login when a password is supplied (removed the buggy deactivated-reactivation branch).
+- Issue 2: Super admin could only reset password for members that already had a login; members added without a login had no way to get a password. Fix:
+  - `reset_member_password` now CREATES a member login (role=member, mobile-based) if none exists, and links it to the member.
+  - Frontend member/[id].tsx: the button now shows for ALL super admins (label "Set Password" when no login, "Reset Password" when a login exists); modal wording/toast adapt accordingly; member reloads after success.
+- Verified by main agent via API: self-register->delete->re-add-with-password succeeds and the re-added member can log in; set-password on a no-login member lets them log in.
+- Needs testing_agent verification (frontend + backend): full member delete->re-add flow via UI, and super admin Set/Reset Password flow via UI.

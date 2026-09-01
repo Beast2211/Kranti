@@ -220,23 +220,38 @@ class ResetBody(BaseModel):
 async def register(body: RegisterBody):
     existing = await users.find_one({"mobile": body.mobile})
     if existing:
-        raise HTTPException(status_code=409, detail="This mobile number is already registered.")
-    t = iso(now())
-    user_id = uid()
-    user_doc = {
-        "id": user_id,
-        "full_name": body.full_name.strip(),
-        "user_id": None,
-        "mobile": body.mobile,
-        "email": None,
-        "role": "member",
-        "status": "pending",
-        "password_hash": hash_password(body.password),
-        "token_version": 0,
-        "created_at": t,
-        "updated_at": t,
-    }
-    await users.insert_one(user_doc)
+        if existing.get("role") == "member" and existing.get("status") == "deactivated":
+            t = iso(now())
+            user_id = existing["id"]
+            await users.update_one(
+                {"id": user_id},
+                {"$set": {
+                    "full_name": body.full_name.strip(),
+                    "mobile": body.mobile,
+                    "password_hash": hash_password(body.password),
+                    "status": "pending",
+                    "updated_at": t,
+                }, "$inc": {"token_version": 1}},
+            )
+        else:
+            raise HTTPException(status_code=409, detail="This mobile number is already registered.")
+    else:
+        t = iso(now())
+        user_id = uid()
+        user_doc = {
+            "id": user_id,
+            "full_name": body.full_name.strip(),
+            "user_id": None,
+            "mobile": body.mobile,
+            "email": None,
+            "role": "member",
+            "status": "pending",
+            "password_hash": hash_password(body.password),
+            "token_version": 0,
+            "created_at": t,
+            "updated_at": t,
+        }
+        await users.insert_one(user_doc)
     member_doc = {
         "id": uid(),
         "profile_id": user_id,
@@ -461,6 +476,18 @@ class MemberUpdate(BaseModel):
     advance_amount: Optional[float] = None
 
 
+class MemberResetPasswordBody(BaseModel):
+    new_password: str = Field(min_length=6)
+    confirm_password: str = Field(min_length=6)
+
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v: str, info) -> str:
+        if info.data.get("new_password") != v:
+            raise ValueError("Passwords do not match")
+        return v
+
+
 @api.get("/members")
 async def list_members(
     status: Optional[str] = None,
@@ -494,9 +521,9 @@ async def create_member(body: MemberCreate, user: dict = Depends(require_roles(*
         raise HTTPException(status_code=409, detail="This mobile number is already registered.")
     t = iso(now())
     profile_id = None
+    if await users.find_one({"mobile": body.mobile}):
+        raise HTTPException(status_code=409, detail="This mobile number is already registered.")
     if body.password:
-        if await users.find_one({"mobile": body.mobile}):
-            raise HTTPException(status_code=409, detail="This mobile number is already registered.")
         profile_id = uid()
         await users.insert_one({
             "id": profile_id,
@@ -556,10 +583,62 @@ async def delete_member(member_id: str, user: dict = Depends(require_roles(*ADMI
     if not m:
         raise HTTPException(status_code=404, detail="Member not found")
     await members.update_one({"id": member_id}, {"$set": {"deleted_at": iso(now())}})
+    # Hard-remove the linked member login so the mobile number is fully freed
+    # and the same details can be registered/added again later.
     if m.get("profile_id"):
-        await users.update_one({"id": m["profile_id"]}, {"$set": {"status": "deactivated"}, "$inc": {"token_version": 1}})
+        await users.delete_one({"id": m["profile_id"], "role": "member"})
     await write_audit(user, "MEMBER_DELETED", "members", member_id, f"Deleted {m.get('full_name')}")
     return {"message": "Member deleted"}
+
+
+@api.post("/members/{member_id}/reset-password")
+async def reset_member_password(
+    member_id: str,
+    body: MemberResetPasswordBody,
+    user: dict = Depends(require_roles("super_admin")),
+):
+    m = await members.find_one({"id": member_id, "deleted_at": None}, {"_id": 0})
+    if not m:
+        raise HTTPException(status_code=404, detail="Member not found")
+    t = iso(now())
+    profile_id = m.get("profile_id")
+    target = await users.find_one({"id": profile_id}) if profile_id else None
+    if target and target.get("role") == "member":
+        await users.update_one(
+            {"id": target["id"]},
+            {"$set": {
+                "password_hash": hash_password(body.new_password),
+                "status": "active",
+                "updated_at": t,
+            }, "$inc": {"token_version": 1}},
+        )
+    else:
+        # Member has no login yet — create one so they can sign in with their mobile.
+        if await users.find_one({"mobile": m.get("mobile")}):
+            raise HTTPException(status_code=409, detail="A login already exists for this mobile number.")
+        profile_id = uid()
+        await users.insert_one({
+            "id": profile_id,
+            "full_name": m.get("full_name"),
+            "user_id": None,
+            "mobile": m.get("mobile"),
+            "email": m.get("email"),
+            "role": "member",
+            "status": "active",
+            "password_hash": hash_password(body.new_password),
+            "token_version": 0,
+            "created_at": t,
+            "updated_at": t,
+        })
+        await members.update_one({"id": member_id}, {"$set": {"profile_id": profile_id, "updated_at": t}})
+    await write_audit(
+        user,
+        "MEMBER_PASSWORD_RESET",
+        "members",
+        member_id,
+        f"Set login password for {m.get('full_name')}",
+    )
+    return {"message": "Member password set successfully."}
 
 
 @api.post("/members/{member_id}/approve")
