@@ -214,7 +214,7 @@ export default function MemberDetail() {
           <Pressable style={styles.confirmCard} onPress={() => {}}>
             <View style={styles.confirmIcon}><Ionicons name="trash" size={26} color={colors.error} /></View>
             <Text style={styles.confirmTitle}>Delete member?</Text>
-            <Text style={styles.confirmSub} numberOfLines={2}>"{member?.full_name}" and their record will be removed.</Text>
+            <Text style={styles.confirmSub} numberOfLines={2}>{`"${member?.full_name ?? ""}" and their record will be removed.`}</Text>
             <View style={styles.confirmActions}>
               <Button title="Cancel" variant="secondary" onPress={() => setConfirmDelete(false)} style={{ flex: 1 }} testID="cancel-delete-member" />
               <Button title="Delete" variant="danger" onPress={doDelete} loading={deleting} style={{ flex: 1 }} testID="confirm-delete-member" />

@@ -137,7 +137,7 @@ export default function Expenses() {
           <Pressable style={styles.confirmCard} onPress={() => {}}>
             <View style={styles.confirmIcon}><Ionicons name="trash" size={26} color={colors.error} /></View>
             <Text style={styles.confirmTitle}>Delete expense?</Text>
-            <Text style={styles.confirmSub} numberOfLines={2}>"{confirm?.title}" will be removed from records.</Text>
+            <Text style={styles.confirmSub} numberOfLines={2}>{`"${confirm?.title ?? ""}" will be removed from records.`}</Text>
             <View style={styles.confirmActions}>
               <Button title="Cancel" variant="secondary" onPress={() => setConfirm(null)} style={{ flex: 1 }} testID="cancel-delete-expense" />
               <Button title="Delete" variant="danger" onPress={doDelete} loading={deleting} style={{ flex: 1 }} testID="confirm-delete-expense" />

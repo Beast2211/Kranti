@@ -128,7 +128,7 @@ export default function Events() {
           <Pressable style={styles.confirmCard} onPress={() => {}}>
             <View style={styles.confirmIcon}><Ionicons name="trash" size={26} color={colors.error} /></View>
             <Text style={styles.confirmTitle}>Delete event?</Text>
-            <Text style={styles.confirmSub} numberOfLines={2}>"{confirm?.event_name}" will be removed from the schedule.</Text>
+            <Text style={styles.confirmSub} numberOfLines={2}>{`"${confirm?.event_name ?? ""}" will be removed from the schedule.`}</Text>
             <View style={styles.confirmActions}>
               <Button title="Cancel" variant="secondary" onPress={() => setConfirm(null)} style={{ flex: 1 }} testID="cancel-delete-event" />
               <Button title="Delete" variant="danger" onPress={doDelete} loading={deleting} style={{ flex: 1 }} testID="confirm-delete-event" />

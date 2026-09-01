@@ -99,7 +99,7 @@ export default function AddMember() {
         </View>
 
         <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.surfaceTertiary, borderColor: colors.brandTertiary }}>
-          <Text style={styles.note}>Advance is counted as amount already collected and reduces the member's pending Vargani.</Text>
+          <Text style={styles.note}>{"Advance is counted as amount already collected and reduces the member's pending Vargani."}</Text>
         </Card>
 
         {!isEdit && (
